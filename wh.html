@@ -85,7 +85,7 @@ td.desc{white-space:normal;min-width:240px;text-align:left}
 
   <section class="tiles">
     <div class="card kc" id="t-acc"><div class="big2" id="k-acc">—</div><div class="kt">Final accuracy</div><div class="sub" id="k-acc-s">—</div></div>
-    <div class="card kc" id="t-ira"><div class="big2" id="k-ira">—</div><div class="kt">IRA ops accuracy</div><div class="sub" id="k-ira-s">—</div></div>
+    <div class="card kc" id="t-ira"><div class="big2" id="k-ira">—</div><div class="kt">IRA accuracy</div><div class="sub" id="k-ira-s">—</div></div>
     <div class="card kc" id="t-qty"><div class="big2" id="k-qty">—</div><div class="kt">QTY accuracy</div><div class="sub" id="k-qty-s">—</div></div>
     <div class="card kc" id="t-data"><div class="big2" id="k-data">—</div><div class="kt">Data accuracy</div><div class="sub" id="k-data-s">—</div></div>
     <div class="card kc red"><div class="big2" id="k-ops">—</div><div class="kt">Discrepancies on OPS</div><div class="sub" id="k-ops-s">—</div></div>
@@ -96,7 +96,7 @@ td.desc{white-space:normal;min-width:240px;text-align:left}
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start">
       <div><h2 id="am-title">Accuracy by warehouse and month</h2>
       <p class="note">Each warehouse in each month, with totals. Click a cell to filter the page.</p></div>
-      <div class="seg" role="group" aria-label="Accuracy type"><button type="button" data-am="final" class="on">Final</button><button type="button" data-am="ira">IRA ops</button><button type="button" data-am="qty">QTY</button><button type="button" data-am="data">Data</button></div>
+      <div class="seg" role="group" aria-label="Accuracy type"><button type="button" data-am="final" class="on">Final</button><button type="button" data-am="ira">IRA</button><button type="button" data-am="qty">QTY</button><button type="button" data-am="data">Data</button></div>
     </div>
     <div class="legend" id="acc-legend"></div>
     <div class="chart" id="ch-accm" style="min-height:160px"></div>
@@ -220,7 +220,7 @@ function render(){
 function accMatrix(){
   const el=document.getElementById('ch-accm');el.replaceChildren();
   const lg=document.getElementById('acc-legend');lg.replaceChildren();BANDS.forEach(b=>{const sp=document.createElement('span');const i=document.createElement('i');i.style.background=b.bg;sp.append(i,b.label);lg.append(sp);});
-  document.getElementById('am-title').textContent={final:'Final accuracy',ira:'IRA ops accuracy',qty:'QTY accuracy',data:'Data accuracy'}[amMode]+' by warehouse and month';
+  document.getElementById('am-title').textContent={final:'Final accuracy',ira:'IRA accuracy',qty:'QTY accuracy',data:'Data accuracy'}[amMode]+' by warehouse and month';
   const f=amMode==='ira'?sIra:sAll,key=amMode==='qty'?'qacc':amMode==='data'?'dacc':'acc';
   const TOT='Total',ALL='Total WHs',whs=storers,xs=[...months,TOT],ys=[...whs,ALL],cells=[];
   ys.forEach(s=>xs.forEach(m=>{const st=f(s===ALL?'':s,m===TOT?'':m);if(st.tc>0)cells.push({s,m,v:st[key],st,kind:s===ALL||m===TOT?'tot':'cell'});}));
