@@ -117,10 +117,10 @@ td.desc{white-space:normal;min-width:220px;text-align:left}
     <div class="card"><h2>Value by warehouse</h2>
       <p class="note">Damage and expired stock value (EGP) held in each warehouse. Point at a bar for quantities.</p>
       <div class="legend"><span><i style="background:var(--bad)"></i>Damage</span><span><i style="background:#d9982b"></i>Expired</span></div>
-      <div class="chart" id="ch-wh"></div></div>
+      <div class="chart hb" id="ch-wh"></div></div>
     <div class="card"><h2>Expired stock by age</h2>
       <p class="note">Expired value by how long ago it expired (from the data date). Older stock is harder to recover.</p>
-      <div class="chart" id="ch-age"></div></div>
+      <div class="chart hb" id="ch-age"></div></div>
   </section>
 
   <section class="grid2">
@@ -161,8 +161,8 @@ td.desc{white-space:normal;min-width:220px;text-align:left}
   </section>
 
   <section class="grid2">
-    <div class="card"><h2>RAMP damage by warehouse</h2><div class="chart" id="ch-rwh"></div></div>
-    <div class="card"><h2>RAMP damage by customer</h2><div class="chart" id="ch-rown"></div></div>
+    <div class="card"><h2>RAMP damage by warehouse</h2><div class="chart hb" id="ch-rwh"></div></div>
+    <div class="card"><h2>RAMP damage by customer</h2><div class="chart hb" id="ch-rown"></div></div>
   </section>
 
   <section class="card">
@@ -282,7 +282,7 @@ function whChart(X){
   const W=Math.max(300,el.clientWidth),rh=32,H=rows.length*rh+8;
   const svg=d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Damage and expired value by warehouse');
   const lab=svg.append('g').selectAll('text').data(rows).join('text').text(r=>r.w).attr('y',(r,i)=>i*rh+rh/2+4).style('font-weight',r=>r.w===fw?700:null);
-  let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=Math.ceil(ml)+10;
+  let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=el.clientWidth<560&&el.classList.contains('hb')?0:Math.ceil(ml)+10;
   const x=d3.scaleLinear().domain([0,d3.max(rows,r=>r.t)||1]).range([ml,W-90]);
   const tip=tipFor(el);
   rows.forEach((r,i)=>{svg.append('rect').attr('x',ml).attr('y',i*rh+6).attr('width',x(r.d)-ml).attr('height',rh-12).attr('fill',css('--bad'));
@@ -304,7 +304,7 @@ function ageChart(Ex){
   const W=Math.max(300,el.clientWidth),rh=32,H=rows.length*rh+8;
   const svg=d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Expired value by age');
   const lab=svg.append('g').selectAll('text').data(rows).join('text').text(r=>r.k).attr('y',(r,i)=>i*rh+rh/2+4);
-  let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=Math.ceil(ml)+10;
+  let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=el.clientWidth<560&&el.classList.contains('hb')?0:Math.ceil(ml)+10;
   const x=d3.scaleLinear().domain([0,d3.max(rows,r=>r.v)||1]).range([ml,W-120]);const tip=tipFor(el);
   rows.forEach((r,i)=>{svg.append('rect').attr('x',ml).attr('y',i*rh+6).attr('width',Math.max(0,x(r.v)-ml)).attr('height',rh-12).attr('fill',AMBER).attr('opacity',.45+.55*(i/(rows.length-1||1)));
     svg.append('text').attr('x',x(r.v)+6).attr('y',i*rh+rh/2+4).style('fill',css('--fg')).style('font-weight',600).text(fM(r.v)+' · '+fP0(tot?r.v/tot:0));
@@ -356,7 +356,7 @@ function bars(elId,pairs,tot,color,limit){
   const W=Math.max(300,el.clientWidth),rh=28,H=rows.length*rh+8;
   const svg=d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img');
   const lab=svg.append('g').selectAll('text').data(rows).join('text').text(r=>r.k.length>34?r.k.slice(0,33)+'…':r.k).attr('y',(r,i)=>i*rh+rh/2+4);
-  let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=Math.ceil(ml)+10;
+  let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=el.clientWidth<560&&el.classList.contains('hb')?0:Math.ceil(ml)+10;
   const x=d3.scaleLinear().domain([0,d3.max(rows,r=>r.v)||1]).range([ml,W-110]);
   rows.forEach((r,i)=>{svg.append('rect').attr('x',ml).attr('y',i*rh+5).attr('width',Math.max(1,x(r.v)-ml)).attr('height',rh-10).attr('fill',color);
     svg.append('text').attr('x',x(r.v)+6).attr('y',i*rh+rh/2+4).style('fill',css('--fg')).style('font-weight',600).text(fM(r.v)+' · '+fP0(tot?r.v/tot:0));});
@@ -374,6 +374,45 @@ document.getElementById('q').oninput=e=>{q=e.target.value;casesTable(F(D.ramp));
 render();
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(render,150);});
 })();
+// phone: bar charts put the name on its own line above each bar, so the bars get the full width
+(function(){
+  function stackBars(el){
+    if(el.clientWidth>=560)return;const svg=el.querySelector('svg');if(!svg||svg.dataset.st)return;svg.dataset.st=1;
+    const vb=svg.viewBox.baseVal;if(!vb||!vb.width)return;const W=vb.width;
+    const texts=[...svg.querySelectorAll('text')];
+    const labs=texts.filter(t=>{const a=t.getAttribute('text-anchor');const b=t.getBBox();return a!=='middle'&&a!=='end'&&b.x<2&&b.width>0;});
+    if(labs.length<1)return;
+    const ys=labs.map(t=>+t.getAttribute('y')).sort((a,b)=>a-b);
+    const rh=ys.length>1?ys[1]-ys[0]:30,LH=15,ml=0;
+    const leaves=[...svg.querySelectorAll('rect,text,line')].filter(e=>!labs.includes(e));
+    const bars=leaves.filter(e=>e.tagName==='rect'&&+e.getAttribute('width')<W-1);
+    const maxR=Math.max(ml+1,...bars.map(e=>+e.getAttribute('x')+ +e.getAttribute('width')));
+    const k=1,nx=v=>v;
+    const rowOf=cy=>Math.max(0,Math.min(labs.length-1,Math.floor(cy/rh)));
+    leaves.forEach(e=>{
+      if(e.tagName==='line'){const y1=+e.getAttribute('y1'),y2=+e.getAttribute('y2'),r=rowOf((y1+y2)/2),d=(r+1)*LH;
+        e.setAttribute('y1',y1+d);e.setAttribute('y2',y2+d);['x1','x2'].forEach(a=>e.setAttribute(a,nx(+e.getAttribute(a))));return;}
+      const y=+e.getAttribute('y')||0,h=e.tagName==='rect'?+e.getAttribute('height'):0,r=rowOf(e.tagName==='rect'?y+h/2:y-4),d=(r+1)*LH;
+      if(e.tagName==='rect'&&+e.getAttribute('width')>=W-1){e.setAttribute('y',r*(rh+LH));e.setAttribute('height',rh+LH);return;}
+      e.setAttribute('y',y+d);
+      if(e.tagName==='rect'){const x=+e.getAttribute('x'),w=+e.getAttribute('width');e.setAttribute('x',nx(x));e.setAttribute('width',Math.max(0,w*k));}
+      else if(e.hasAttribute('x'))e.setAttribute('x',nx(+e.getAttribute('x')));
+    });
+    labs.forEach(t=>{const r=rowOf(+t.getAttribute('y')-4);t.setAttribute('y',r*(rh+LH)+LH-2);t.setAttribute('x',0);});
+    const H=vb.height+labs.length*LH;svg.setAttribute('height',H);svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  }
+  document.querySelectorAll('.chart.hb').forEach(el=>{new MutationObserver(()=>requestAnimationFrame(()=>stackBars(el))).observe(el,{childList:true});stackBars(el);});
+})();
 </script>
+<style>
+@media (max-width:640px){
+  .filters select{width:100%!important}
+  .tiles{grid-template-columns:1fr 1fr;gap:10px}
+  .tiles .card{padding:12px}
+  .big,.big2{font-size:23px}
+  .kc{padding-left:12px}
+  #tb-flow td:first-child{min-width:170px;max-width:58vw}
+}
+</style>
 </body>
 </html>
