@@ -52,6 +52,23 @@ details{font-size:12px;color:var(--muted)}details summary{cursor:pointer;color:v
 .seg button.on{background:var(--c1);color:var(--card)}
 .foot{font-size:12px;color:var(--muted)}
 .pill{display:inline-block;font-size:11px;padding:1px 8px;border-radius:999px;background:var(--soft);color:var(--muted)}
+
+/* phone layout */
+.grid2{grid-template-columns:repeat(auto-fit,minmax(min(360px,100%),1fr))}
+.chart.hs{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:640px){
+  .wrap{padding:16px 12px 40px;gap:16px}
+  h1{font-size:24px}
+  .card{padding:14px}
+  select,.filters select{min-width:0;width:100%}
+  .filters,.filters label{width:100%}
+  .searchbox{min-width:0;width:100%}
+  .tw th:first-child,.tw td:first-child{position:sticky;left:0;z-index:1;background:var(--card);white-space:normal;min-width:110px;max-width:42vw;box-shadow:1px 0 0 var(--line)}
+  .tw th:first-child{z-index:3}
+  .tw tr.sel td:first-child,.tw tr.click:hover td:first-child,.tw tr.tot td:first-child{background:var(--sel)}
+  td.mailcell,td.wrapcell,td.desc{min-width:180px}
+  th,td{padding:7px 8px}
+}
 </style>
 </head>
 <body>
@@ -104,20 +121,20 @@ details{font-size:12px;color:var(--muted)}details summary{cursor:pointer;color:v
       </div>
     </div>
     <div class="legend" id="pm-legend" hidden></div>
-    <div class="chart" id="ch-prodm" style="min-height:160px"></div>
+    <div class="chart hs" id="ch-prodm" style="min-height:160px"></div>
   </section>
 
   <section class="card">
     <h2>IRA WH coverage by month</h2>
     <p class="note">Locations counted in IRA reports in the month ÷ all locations of the warehouse in the Location List (fake locations excluded). The <b>Total</b> column and the <b>All warehouses</b> row are the grand totals; the IRA card above always equals the cell for your current filter.</p>
     <div class="legend" id="ira-legend"></div>
-    <div class="chart" id="ch-ira" style="min-height:160px"></div>
+    <div class="chart hs" id="ch-ira" style="min-height:160px"></div>
   </section>
 
   <section class="card">
     <h2>Missing TRNS reports by month</h2>
     <p class="note">Number of active working days (official holidays and Fridays excluded) with no TRNS report, per warehouse and month. Darker red = more missing days.</p>
-    <div class="chart" id="ch-missm" style="min-height:160px"></div>
+    <div class="chart hs" id="ch-missm" style="min-height:160px"></div>
     <details style="margin-top:10px"><summary>Show the dates</summary>
       <div class="tw"><table><thead><tr><th>Date</th><th class="l">Day</th><th class="l">Month</th><th class="l">Storer</th></tr></thead><tbody id="tb-miss"></tbody></table></div>
     </details>
@@ -126,7 +143,7 @@ details{font-size:12px;color:var(--muted)}details summary{cursor:pointer;color:v
   <section class="card">
     <h2>Pending TRNS locations by month</h2>
     <p class="note">Locations with a system transaction and no later TRNS count, by the month of their last transaction. Darker red = more pending locations.</p>
-    <div class="chart" id="ch-pendm" style="min-height:160px"></div>
+    <div class="chart hs" id="ch-pendm" style="min-height:160px"></div>
     <div style="margin-top:14px;display:flex;flex-direction:column;gap:16px">
       <div><h3 style="font-size:14px;margin:0 0 8px">By reason</h3>
         <div class="tw"><table><thead><tr><th>Storer</th><th>Never counted</th><th>After count</th><th>Same day</th><th>Total</th></tr></thead><tbody id="tb-pend"></tbody></table></div></div>
@@ -222,7 +239,7 @@ function render(){
 }
 
 function tipFor(el){const t=document.createElement('div');t.className='tip';t.hidden=true;el.append(t);return t;}
-function place(tip,el,ev,dy){const [px,py]=d3.pointer(ev,el);tip.style.left=Math.max(0,Math.min(el.clientWidth-tip.offsetWidth,px+12))+'px';tip.style.top=Math.max(0,py-(dy||44))+'px';}
+function place(tip,el,ev,dy){const [px,py]=d3.pointer(ev,el),sl=el.scrollLeft||0;tip.style.left=Math.max(sl,Math.min(sl+el.clientWidth-tip.offsetWidth,px+12+sl))+'px';tip.style.top=Math.max(0,py-(dy||44))+'px';}
 
 function whChart(){
   const el=document.getElementById('ch-wh');el.replaceChildren();
@@ -293,9 +310,9 @@ function prodHeat(){
   cells.forEach(c=>c.share=colTot[c.month]?c.v/colTot[c.month]:0);
   const maxCell=d3.max(cells.filter(c=>c.kind==='cell'),c=>c.v)||1,maxShare=d3.max(cells.filter(c=>c.kind==='cell'),c=>c.share)||1;
   const ys=[...whs,ALL],xs=[...Ms,TOT];
-  const W=Math.max(320,el.clientWidth),rh=30,gap=8,H=ys.length*rh+gap+24;
+  const W=Math.max(320,el.clientWidth,190+xs.length*58),rh=30,gap=8,H=ys.length*rh+gap+24;
   const yOf=s=>s===ALL?whs.length*rh+gap:whs.indexOf(s)*rh;
-  const svg=d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label',(pmMet==='rep'?'Reports':'Locations checked')+' by warehouse and month, with totals');
+  const svg=d3.select(el).append('svg').attr('width',W>el.clientWidth?W:'100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label',(pmMet==='rep'?'Reports':'Locations checked')+' by warehouse and month, with totals');
   const lab=svg.append('g').selectAll('text').data(ys).join('text').text(w=>w).attr('y',w=>yOf(w)+rh/2+4)
     .attr('font-weight',w=>w===ALL||w===fs?700:null).style('fill',w=>w===ALL||w===fs?css('--fg'):null);
   let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=Math.ceil(ml)+12;
@@ -336,9 +353,9 @@ function iraHeat(){
   whs.forEach(s=>cells.push({...agg(rows.filter(r=>r.storer===s)),storer:s,month:TOT,kind:'wtot'}));
   cells.push({...agg(rows),storer:ALL,month:TOT,kind:'grand'});
   const ys=[...whs,ALL],xs=[...Ms,TOT];
-  const W=Math.max(320,el.clientWidth),rh=30,gap=8,H=ys.length*rh+gap+24;
+  const W=Math.max(320,el.clientWidth,190+xs.length*58),rh=30,gap=8,H=ys.length*rh+gap+24;
   const yOf=s=>s===ALL?whs.length*rh+gap:whs.indexOf(s)*rh;
-  const svg=d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','IRA coverage by warehouse and month, with totals');
+  const svg=d3.select(el).append('svg').attr('width',W>el.clientWidth?W:'100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','IRA coverage by warehouse and month, with totals');
   const lab=svg.append('g').selectAll('text').data(ys).join('text').text(w=>w).attr('y',w=>yOf(w)+rh/2+4)
     .attr('font-weight',w=>w===ALL||w===fs?700:null).style('fill',w=>w===ALL||w===fs?css('--fg'):null);
   let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=Math.ceil(ml)+12;
@@ -371,9 +388,9 @@ function countHeat(elId,rows,mk,label){
   const ys=[...whs,ALL],xs=[...Ms,TOT],cells=[];
   ys.forEach(s=>xs.forEach(m=>cells.push({storer:s,month:m,v:get(s,m),kind:s===ALL&&m===TOT?'grand':s===ALL?'mtot':m===TOT?'wtot':'cell'})));
   const maxCell=d3.max(cells.filter(c=>c.kind==='cell'),c=>c.v)||1;
-  const W=Math.max(320,el.clientWidth),rh=30,gap=8,H=ys.length*rh+gap+24;
+  const W=Math.max(320,el.clientWidth,190+xs.length*58),rh=30,gap=8,H=ys.length*rh+gap+24;
   const yOf=s=>s===ALL?whs.length*rh+gap:whs.indexOf(s)*rh;
-  const svg=d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label',label+' by warehouse and month, with totals');
+  const svg=d3.select(el).append('svg').attr('width',W>el.clientWidth?W:'100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label',label+' by warehouse and month, with totals');
   const lab=svg.append('g').selectAll('text').data(ys).join('text').text(w=>w).attr('y',w=>yOf(w)+rh/2+4)
     .attr('font-weight',w=>w===ALL||w===fs?700:null).style('fill',w=>w===ALL||w===fs?css('--fg'):null);
   let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=Math.ceil(ml)+12;
@@ -458,6 +475,24 @@ function wrongTable(W){
 render();
 let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(render,150);});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+})();
+// phone: keep warehouse names fixed while the matrix scrolls sideways
+(function(){
+  const NS='http://www.w3.org/2000/svg';
+  function pin(el){
+    if(el.querySelector('svg.pin'))return;const svg=el.querySelector('svg');if(!svg)return;
+    const r0=svg.getBoundingClientRect();if(r0.width<=el.clientWidth+1)return;
+    const labs=[...svg.querySelectorAll('text')].filter(t=>{const r=t.getBoundingClientRect();return r.width>0&&r.left-r0.left<4;});
+    if(!labs.length)return;
+    const ml=Math.ceil(Math.max(...labs.map(t=>t.getBoundingClientRect().right-r0.left)))+8,H=r0.height;
+    const p=document.createElementNS(NS,'svg');p.setAttribute('class','pin');p.setAttribute('width',ml);p.setAttribute('height',H);p.setAttribute('viewBox',`0 0 ${ml} ${H}`);
+    const bg=document.createElementNS(NS,'rect');bg.setAttribute('width',ml);bg.setAttribute('height',H);bg.style.fill='var(--card)';p.append(bg);
+    labs.forEach(t=>{const g=document.createElementNS(NS,'g');const tr=t.parentNode!==svg&&t.parentNode.getAttribute('transform');if(tr)g.setAttribute('transform',tr);g.append(t.cloneNode(true));p.append(g);});
+    el.style.display='flex';el.style.alignItems='flex-start';svg.style.flex='none';
+    p.style.cssText=`position:sticky;left:0;z-index:2;flex:none;margin-right:-${ml}px;box-shadow:1px 0 0 var(--line)`;
+    el.insertBefore(p,svg);
+  }
+  document.querySelectorAll('.chart.hs').forEach(el=>{new MutationObserver(()=>requestAnimationFrame(()=>pin(el))).observe(el,{childList:true});pin(el);});
 })();
 </script>
 </body>
