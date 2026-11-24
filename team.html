@@ -108,7 +108,7 @@ details{font-size:12px;color:var(--muted)}details summary{cursor:pointer;color:v
   <section class="card"><h2>Productivity by warehouse</h2>
     <p class="note">Locations checked, split into Occupied and Zero (discrepancy lines count as Occupied), with each warehouse's share of the total and its % of target. Point at a bar for the Occupied / Zero split.</p>
     <div class="legend"><span><i style="background:var(--c0)"></i>Occupied (incl. discrepancy)</span><span><i style="background:var(--c1)"></i>Zero</span></div>
-    <div class="chart" id="ch-wh"></div>
+    <div class="chart hb" id="ch-wh"></div>
   </section>
 
   <section class="card">
@@ -251,7 +251,7 @@ function whChart(){
   const all=d3.sum(rows,r=>r.total),W=Math.max(300,el.clientWidth),rh=30,H=rows.length*rh+8;
   const svg=d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`).attr('role','img').attr('aria-label','Locations checked per warehouse, stacked by status');
   const lab=svg.append('g').selectAll('text').data(rows).join('text').text(r=>r.storer).attr('y',(r,i)=>i*rh+rh/2+4).attr('font-weight',r=>r.storer===fs?700:null);
-  let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=Math.ceil(ml)+10;
+  let ml=0;lab.each(function(){ml=Math.max(ml,this.getComputedTextLength());});ml=el.clientWidth<560&&el.classList.contains('hb')?0:Math.ceil(ml)+10;
   const endW=170,x=d3.scaleLinear().domain([0,d3.max(rows,r=>r.total)]).range([ml,W-endW]);
   const tip=tipFor(el);
   rows.forEach((r,i)=>{let x0=ml;keys.forEach((k,j)=>{const w=x(r[k])-ml;svg.append('rect').attr('x',x0).attr('y',i*rh+5).attr('width',Math.max(0,w)).attr('height',rh-10).attr('fill',cols[j]).attr('opacity',fs&&r.storer!==fs?.35:1);x0+=w;});
@@ -490,10 +490,49 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
     labs.forEach(t=>{const g=document.createElementNS(NS,'g');const tr=t.parentNode!==svg&&t.parentNode.getAttribute('transform');if(tr)g.setAttribute('transform',tr);g.append(t.cloneNode(true));p.append(g);});
     el.style.display='flex';el.style.alignItems='flex-start';svg.style.flex='none';
     p.style.cssText=`position:sticky;left:0;z-index:2;flex:none;margin-right:-${ml}px;box-shadow:1px 0 0 var(--line)`;
-    el.insertBefore(p,svg);
+    el.insertBefore(p,svg);el.scrollLeft=el.scrollWidth;
   }
   document.querySelectorAll('.chart.hs').forEach(el=>{new MutationObserver(()=>requestAnimationFrame(()=>pin(el))).observe(el,{childList:true});pin(el);});
 })();
+// phone: bar charts put the name on its own line above each bar, so the bars get the full width
+(function(){
+  function stackBars(el){
+    if(el.clientWidth>=560)return;const svg=el.querySelector('svg');if(!svg||svg.dataset.st)return;svg.dataset.st=1;
+    const vb=svg.viewBox.baseVal;if(!vb||!vb.width)return;const W=vb.width;
+    const texts=[...svg.querySelectorAll('text')];
+    const labs=texts.filter(t=>{const a=t.getAttribute('text-anchor');const b=t.getBBox();return a!=='middle'&&a!=='end'&&b.x<2&&b.width>0;});
+    if(labs.length<1)return;
+    const ys=labs.map(t=>+t.getAttribute('y')).sort((a,b)=>a-b);
+    const rh=ys.length>1?ys[1]-ys[0]:30,LH=15,ml=0;
+    const leaves=[...svg.querySelectorAll('rect,text,line')].filter(e=>!labs.includes(e));
+    const bars=leaves.filter(e=>e.tagName==='rect'&&+e.getAttribute('width')<W-1);
+    const maxR=Math.max(ml+1,...bars.map(e=>+e.getAttribute('x')+ +e.getAttribute('width')));
+    const k=1,nx=v=>v;
+    const rowOf=cy=>Math.max(0,Math.min(labs.length-1,Math.floor(cy/rh)));
+    leaves.forEach(e=>{
+      if(e.tagName==='line'){const y1=+e.getAttribute('y1'),y2=+e.getAttribute('y2'),r=rowOf((y1+y2)/2),d=(r+1)*LH;
+        e.setAttribute('y1',y1+d);e.setAttribute('y2',y2+d);['x1','x2'].forEach(a=>e.setAttribute(a,nx(+e.getAttribute(a))));return;}
+      const y=+e.getAttribute('y')||0,h=e.tagName==='rect'?+e.getAttribute('height'):0,r=rowOf(e.tagName==='rect'?y+h/2:y-4),d=(r+1)*LH;
+      if(e.tagName==='rect'&&+e.getAttribute('width')>=W-1){e.setAttribute('y',r*(rh+LH));e.setAttribute('height',rh+LH);return;}
+      e.setAttribute('y',y+d);
+      if(e.tagName==='rect'){const x=+e.getAttribute('x'),w=+e.getAttribute('width');e.setAttribute('x',nx(x));e.setAttribute('width',Math.max(0,w*k));}
+      else if(e.hasAttribute('x'))e.setAttribute('x',nx(+e.getAttribute('x')));
+    });
+    labs.forEach(t=>{const r=rowOf(+t.getAttribute('y')-4);t.setAttribute('y',r*(rh+LH)+LH-2);t.setAttribute('x',0);});
+    const H=vb.height+labs.length*LH;svg.setAttribute('height',H);svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  }
+  document.querySelectorAll('.chart.hb').forEach(el=>{new MutationObserver(()=>requestAnimationFrame(()=>stackBars(el))).observe(el,{childList:true});stackBars(el);});
+})();
 </script>
+<style>
+@media (max-width:640px){
+  .filters select{width:100%!important}
+  .tiles{grid-template-columns:1fr 1fr;gap:10px}
+  .tiles .card{padding:12px}
+  .big,.big2{font-size:23px}
+  .kc{padding-left:12px}
+  #tb-flow td:first-child{min-width:170px;max-width:58vw}
+}
+</style>
 </body>
 </html>
