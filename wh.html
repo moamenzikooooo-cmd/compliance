@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="20261128084419">
+<meta name="build" content="20261128085055">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -126,7 +126,7 @@ td.desc{white-space:normal;min-width:240px;text-align:left}
   <section class="card">
     <h2 id="at-title">Accuracy trend by month</h2>
     <p style="margin:2px 0 6px;font-weight:700;font-size:14px">Target: 99.85% (dashed line)</p>
-    <p class="note">Total of all warehouses. Click a warehouse to compare it with the total; hold <b>Ctrl</b> and click to add more warehouses (on a phone every tap adds or removes one). "All warehouses" shows every line. Values are written on the chart when one warehouse is picked; with more, point at a month. Follows the Final / IRA / QTY / Data choice above; point at a month for every warehouse.</p>
+    <p class="note">Total of all warehouses. Click a warehouse to compare it with the total; hold <b>Ctrl</b> and click to add more warehouses (on a phone every tap adds or removes one). "All warehouses" shows every line. With several warehouses each value is written in its line's colour. Follows the Final / IRA / QTY / Data choice above; point at a month for every warehouse.</p>
     <div class="legend" id="at-legend"></div>
     <div class="chart" id="ch-acct" style="min-height:280px"></div>
   </section>
@@ -296,7 +296,7 @@ function accTrend(){
     if(multi){cur.has(x.s)?cur.delete(x.s):cur.add(x.s);}else{const only=cur.size===1&&cur.has(x.s);cur.clear();if(!only)cur.add(x.s);}atSel=cur;accTrend();}));
   chip('All warehouses',null,atAll,()=>{atAll=!atAll;accTrend();});
   const shown=[tot,...picked],faint=atAll?series.filter(x=>x!==tot&&!picked.includes(x)):[];
-  const W=Math.max(320,el.clientWidth),H=280,mt=26,mb=26,ml=58,mr=14;
+  const W=Math.max(320,el.clientWidth),H=picked.length>1?Math.min(520,300+picked.length*40):280,mt=26,mb=26,ml=58,mr=14;
   const vals=[...shown,...faint].flatMap(x=>x.pts.map(p=>p.v));
   let lo=Math.min(d3.min(vals),TARGET),hi=Math.min(1,Math.max(d3.max(vals),TARGET));
   const pad=Math.max((hi-lo)*.18,.0003);lo-=pad;hi+=pad;
@@ -316,6 +316,19 @@ function accTrend(){
     svg.append('g').selectAll('circle').data(xs.pts).join('circle').attr('cx',p=>x(p.m)).attr('cy',p=>y(p.v)).attr('r',4.5).attr('fill',colOf(xs.s)).attr('stroke',css('--card')).attr('stroke-width',1.5);});
   // value labels: the higher point of a month gets its label above, the lower one below; a single line goes above,
   // or below when that month is a dip (lower than both neighbours)
+  if(x.step()>=40&&picked.length>1){
+    // several warehouses: labels beside the points, in each line's colour, spread so they never overlap
+    const last=months[months.length-1];
+    months.forEach(m=>{const L=shown.map(xs=>{const p=xs.pts.find(q=>q.m===m);return p?{xs,v:p.v,py:y(p.v)}:null;}).filter(Boolean).sort((a,b)=>a.py-b.py);
+      if(!L.length)return;L.forEach(o=>o.ly=o.py);
+      for(let k=1;k<L.length;k++)if(L[k].ly-L[k-1].ly<13)L[k].ly=L[k-1].ly+13;
+      const over=L[L.length-1].ly-(H-mb-4);if(over>0)L.forEach(o=>o.ly-=over);
+      for(let k=L.length-2;k>=0;k--)if(L[k+1].ly-L[k].ly<13)L[k].ly=L[k+1].ly-13;
+      const right=m!==last;
+      L.forEach(o=>{if(Math.abs(o.ly-o.py)>3)svg.append('line').attr('x1',x(m)+(right?5:-5)).attr('x2',x(m)+(right?9:-9)).attr('y1',o.py).attr('y2',o.ly).attr('stroke',colOf(o.xs.s)).attr('stroke-width',1);
+        svg.append('text').attr('x',x(m)+(right?10:-10)).attr('y',o.ly+4).attr('text-anchor',right?'start':'end').style('font-weight',700).style('font-size','10.5px')
+          .style('paint-order','stroke').style('stroke',css('--card')).style('stroke-width','3px').style('fill',colOf(o.xs.s)).text(fA(o.v));});});
+  }
   if(x.step()>=40&&picked.length<=1){
     const at=(xs,m)=>{const p=xs&&xs.pts.find(q=>q.m===m);return p?p.v:null;};
     const put=(xs,m,v,above)=>svg.append('text').attr('x',x(m)).attr('y',above?y(v)-10:y(v)+18).attr('text-anchor','middle')
