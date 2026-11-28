@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="20261128135122">
+<meta name="build" content="20261128145324">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -83,9 +83,13 @@ details{font-size:12px;color:var(--muted)}details summary{cursor:pointer;color:v
 .tabp[hidden]{display:none}
 .kt{cursor:pointer;display:flex;flex-direction:column}
 .kt:hover,.kt:focus-visible{border-color:var(--c0);outline:none}
-.spark{margin-top:auto;padding-top:12px;height:56px}
+.kt.rel{border-color:var(--c0);box-shadow:inset 0 3px 0 var(--c0)}
+.trends{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:12px}
+.tr{border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer}
+.tr:hover{border-color:var(--c0)}
+.spark{margin-top:6px}
 .spark svg{display:block;overflow:visible}
-.golink{padding-top:8px;font-size:12px;color:var(--c0);font-weight:600}
+.spark svg text{font-family:var(--sans)}
 @media (max-width:640px){.tabs button{font-size:13px;padding:10px 9px 8px;gap:5px}.tbadge{padding:1px 6px}}
 </style>
 </head>
@@ -103,6 +107,15 @@ details{font-size:12px;color:var(--muted)}details summary{cursor:pointer;color:v
     </div>
   </header>
 
+  <section class="tiles">
+    <div class="card kt" data-go="ach" tabindex="0"><div class="lbl">Number of reports</div><div class="big" id="k-reports">—</div><div class="sub" id="k-reports-sub">—</div></div>
+    <div class="card kt" data-go="ach" tabindex="0"><div class="lbl">Productivity (locations checked)</div><div class="big" id="k-prod">—</div><div class="sub" id="k-prod-tg">—</div><div class="sub" id="k-prod-sub">—</div></div>
+    <div class="card kt" data-go="comp" tabindex="0"><div class="lbl">IRA WH coverage</div><div class="big" id="k-ira">—</div><div class="sub" id="k-ira-tg">—</div><div class="sub" id="k-ira-sub">—</div></div>
+    <div class="card kt" data-go="viol" tabindex="0"><div class="lbl">Missing TRNS reports</div><div class="big" id="k-miss">—</div><div class="sub" id="k-miss-tg">Target 0</div><div class="sub">Working days with no TRNS report</div></div>
+    <div class="card kt" data-go="viol" tabindex="0"><div class="lbl">Pending TRNS locations</div><div class="big" id="k-pend">—</div><div class="sub" id="k-pend-tg">Target 0</div><div class="sub">Transacted, not counted in TRNS after</div></div>
+    <div class="card kt" data-go="viol" tabindex="0"><div class="lbl">Violation: wrong data</div><div class="big" id="k-wrong">—</div><div class="sub">Reports where mail and collect sheet differ</div></div>
+  </section>
+
   <nav class="tabs" id="tabs" aria-label="Sections">
     <button type="button" data-tab="kpi"><span>KPIs</span></button>
     <button type="button" data-tab="ach"><span>Achieved Results</span><b class="tbadge" id="tb-ach"></b></button>
@@ -111,13 +124,16 @@ details{font-size:12px;color:var(--muted)}details summary{cursor:pointer;color:v
   </nav>
 
   <div class="tabp" id="tp-kpi">
-  <section class="tiles">
-    <div class="card kt" data-go="ach" tabindex="0"><div class="lbl">Number of reports</div><div class="big" id="k-reports">—</div><div class="sub" id="k-reports-sub">—</div><div class="spark" id="sp-reports"></div><div class="golink">Achieved Results &rarr;</div></div>
-    <div class="card kt" data-go="ach" tabindex="0"><div class="lbl">Productivity (locations checked)</div><div class="big" id="k-prod">—</div><div class="sub" id="k-prod-tg">—</div><div class="sub" id="k-prod-sub">—</div><div class="spark" id="sp-prod"></div><div class="golink">Achieved Results &rarr;</div></div>
-    <div class="card kt" data-go="comp" tabindex="0"><div class="lbl">IRA WH coverage</div><div class="big" id="k-ira">—</div><div class="sub" id="k-ira-tg">—</div><div class="sub" id="k-ira-sub">—</div><div class="spark" id="sp-ira"></div><div class="golink">Compliance &rarr;</div></div>
-    <div class="card kt" data-go="viol" tabindex="0"><div class="lbl">Missing TRNS reports</div><div class="big" id="k-miss">—</div><div class="sub" id="k-miss-tg">Target 0</div><div class="sub">Working days with no TRNS report</div><div class="spark" id="sp-miss"></div><div class="golink">Violations &rarr;</div></div>
-    <div class="card kt" data-go="viol" tabindex="0"><div class="lbl">Pending TRNS locations</div><div class="big" id="k-pend">—</div><div class="sub" id="k-pend-tg">Target 0</div><div class="sub">Transacted, not counted in TRNS after</div><div class="spark" id="sp-pend"></div><div class="golink">Violations &rarr;</div></div>
-    <div class="card kt" data-go="viol" tabindex="0"><div class="lbl">Violation: wrong data</div><div class="big" id="k-wrong">—</div><div class="sub">Reports where mail and collect sheet differ</div><div class="spark" id="sp-wrong"></div><div class="golink">Violations &rarr;</div></div>
+  <section class="card"><h2>KPI trends by month</h2>
+    <p class="note">Each KPI month by month for the storer picked above (dashed red line = target where it fits the scale). Point at a month for its value; click a chart to open its tab.</p>
+    <div class="trends">
+      <div class="tr" data-go="ach"><div class="lbl">Number of reports</div><div class="spark big" id="sp-reports"></div></div>
+      <div class="tr" data-go="ach"><div class="lbl">Productivity (locations checked)</div><div class="spark big" id="sp-prod"></div></div>
+      <div class="tr" data-go="comp"><div class="lbl">IRA WH coverage</div><div class="spark big" id="sp-ira"></div></div>
+      <div class="tr" data-go="viol"><div class="lbl">Missing TRNS reports</div><div class="spark big" id="sp-miss"></div></div>
+      <div class="tr" data-go="viol"><div class="lbl">Pending TRNS locations</div><div class="spark big" id="sp-pend"></div></div>
+      <div class="tr" data-go="viol"><div class="lbl">Violation: wrong data</div><div class="spark big" id="sp-wrong"></div></div>
+    </div>
   </section>
   </div>
 
@@ -266,31 +282,38 @@ function showTab(t,noScroll){tab=t;
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
   {const ab=document.querySelector('#tabs button.on'),nv=document.getElementById('tabs');if(ab)nv.scrollLeft=Math.max(0,ab.offsetLeft-nv.clientWidth/2+ab.offsetWidth/2);}
   TABS.forEach(x=>document.getElementById('tp-'+x).hidden=x!==t);
+  document.querySelectorAll('.kt').forEach(c=>c.classList.toggle('rel',c.dataset.go===t));
   try{history.replaceState(null,'','#'+t);}catch(e){}
   render();
   if(!noScroll){const nav=document.getElementById('tabs');if(nav.getBoundingClientRect().top<0)nav.scrollIntoView({block:'start'});}
 }
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
 document.querySelectorAll('.kt').forEach(c=>{c.onclick=()=>showTab(c.dataset.go);c.onkeydown=e=>{if(e.key==='Enter')showTab(c.dataset.go);};});
+document.querySelectorAll('.tr').forEach(c=>c.onclick=()=>showTab(c.dataset.go));
 addEventListener('hashchange',()=>{const t=location.hash.slice(1);if(TABS.includes(t)&&t!==tab)showTab(t,true);});
 
 // small month trend under each KPI card (follows the storer filter; the picked month is marked)
 function spark(id,vals,opt){
   const el=document.getElementById(id);if(!el)return;el.replaceChildren();
   const pts=months.filter(m=>M.indexOf(m)<=lastMi).map(m=>({m,v:vals(m)})).filter(p=>p.v!=null);
-  if(pts.length<2)return;
-  const W=Math.max(120,el.clientWidth||200),H=44,pad=4;
-  const lo=d3.min(pts,p=>p.v),hi=d3.max(pts,p=>p.v);
-  const x=d3.scalePoint().domain(pts.map(p=>p.m)).range([pad,W-pad]);
-  const y=d3.scaleLinear().domain(lo===hi?[lo-1,hi+1]:[lo,hi]).range([H-12,pad]);
+  if(pts.length<1){el.textContent='No data';return;}
+  const W=Math.max(200,el.clientWidth||300),H=130,ml=6,mr=6,mt=18,mb=18;
+  let lo=d3.min(pts,p=>p.v),hi=d3.max(pts,p=>p.v);if(lo===hi){lo-=1;hi+=1;}
+  const x=d3.scalePoint().domain(pts.map(p=>p.m)).range([ml+14,W-mr-14]);
+  const y=d3.scaleLinear().domain([lo,hi]).range([H-mb-4,mt]);
   const svg=d3.select(el).append('svg').attr('width','100%').attr('height',H).attr('viewBox',`0 0 ${W} ${H}`);
-  if(opt.target!=null&&opt.target>=lo&&opt.target<=hi)svg.append('line').attr('x1',pad).attr('x2',W-pad).attr('y1',y(opt.target)).attr('y2',y(opt.target)).attr('stroke',css('--bad')).attr('stroke-dasharray','3 3').attr('stroke-width',1);
-  svg.append('path').datum(pts).attr('d',d3.line().x(p=>x(p.m)).y(p=>y(p.v))).attr('fill','none').attr('stroke',css('--c1')).attr('stroke-width',1.8);
-  const g=svg.append('g').selectAll('circle').data(pts).join('circle').attr('cx',p=>x(p.m)).attr('cy',p=>y(p.v))
-    .attr('r',p=>p.m===fm||(!fm&&p===pts[pts.length-1])?3.8:2).attr('fill',p=>p.m===fm||(!fm&&p===pts[pts.length-1])?css('--c0'):css('--c1'));
-  g.append('title').text(p=>`${p.m} ${D.year}: ${opt.fmt(p.v)}`);
-  svg.append('text').attr('x',pad).attr('y',H-1).style('font-size','10px').style('fill',css('--muted')).text(pts[0].m);
-  svg.append('text').attr('x',W-pad).attr('y',H-1).attr('text-anchor','end').style('font-size','10px').style('fill',css('--muted')).text(pts[pts.length-1].m);
+  if(opt.target!=null&&opt.target>=lo&&opt.target<=hi)svg.append('line').attr('x1',ml).attr('x2',W-mr).attr('y1',y(opt.target)).attr('y2',y(opt.target)).attr('stroke',css('--bad')).attr('stroke-dasharray','4 3');
+  svg.append('path').datum(pts).attr('d',d3.line().x(p=>x(p.m)).y(p=>y(p.v))).attr('fill','none').attr('stroke',css('--c1')).attr('stroke-width',2);
+  const key=fm&&pts.some(p=>p.m===fm)?fm:pts[pts.length-1].m;
+  svg.append('g').selectAll('circle').data(pts).join('circle').attr('cx',p=>x(p.m)).attr('cy',p=>y(p.v)).attr('r',p=>p.m===key?4.5:2.6).attr('fill',p=>p.m===key?css('--c0'):css('--c1'));
+  const kp=pts.find(p=>p.m===key);
+  svg.append('text').attr('x',Math.min(W-mr,Math.max(ml,x(kp.m)))).attr('y',y(kp.v)-8).attr('text-anchor',x(kp.m)>W-40?'end':x(kp.m)<40?'start':'middle')
+    .style('font-weight',700).style('font-size','11.5px').style('fill',css('--fg')).style('paint-order','stroke').style('stroke',css('--card')).style('stroke-width','3px').text(opt.fmt(kp.v));
+  svg.append('g').selectAll('text').data(pts).join('text').attr('x',p=>x(p.m)).attr('y',H-3).attr('text-anchor','middle').style('font-size','10px')
+    .style('fill',p=>p.m===key?css('--fg'):css('--muted')).style('font-weight',p=>p.m===key?700:null).text(p=>x.step()<26?p.m[0]:p.m);
+  const tip=tipFor(el);el.style.position='relative';
+  svg.append('g').selectAll('rect').data(pts).join('rect').attr('x',p=>x(p.m)-x.step()/2).attr('width',x.step()).attr('y',0).attr('height',H).attr('fill','transparent')
+    .on('pointermove',(ev,p)=>{tip.textContent=`${p.m} ${D.year}: ${opt.fmt(p.v)}`;tip.hidden=false;place(tip,el,ev,30);}).on('pointerleave',()=>tip.hidden=true);
 }
 function sparks(){
   const bySt=r=>!fs||r.storer===fs;
