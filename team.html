@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta name="build" content="20261128072501">
+<meta name="build" content="20261128075346">
 <meta http-equiv="Cache-Control" content="no-cache">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -242,6 +242,10 @@ function render(){
 }
 
 const shortN=s=>{s=String(s);if(innerWidth>=640||s.length<=18)return s;s=s.replace(/_/g,' ').replace(/\bWH\b/i,'').replace(/^10TH RAMADAN/i,'10th Ram.').replace(/^6TH OCTOBER/i,'6th Oct.').replace(/\s+/g,' ').trim();return s.length>20?s.slice(0,19)+'…':s;};
+function tipRows(tip,title,rows){tip.replaceChildren();const h=document.createElement('div');h.style.fontWeight='600';h.textContent=title;tip.append(h);
+  rows.forEach(([k,v,c])=>{if(v==null)return;const d=document.createElement('div');const s=document.createElement('span');s.textContent=k+': ';const b=document.createElement('b');b.textContent=v;if(c)b.style.color=c;d.append(s,b);tip.append(d);});tip.hidden=false;}
+const pc=p=>p>=1?css('--ok'):p>=.8?css('--warn'):css('--bad');
+const gapTxt=(a,t,u)=>a>=t?`+${fI(a-t)} above target`:`${fI(t-a)} ${u||''} short`.replace('  ',' ');
 function tipFor(el){const t=document.createElement('div');t.className='tip';t.hidden=true;el.append(t);return t;}
 function place(tip,el,ev,dy){const [px,py]=d3.pointer(ev,el),sl=el.scrollLeft||0;tip.style.left=Math.max(sl,Math.min(sl+el.clientWidth-tip.offsetWidth,px+12+sl))+'px';tip.style.top=Math.max(0,py-(dy||44))+'px';}
 
@@ -263,10 +267,10 @@ function whChart(){
       const tx=svg.append('text').attr('x',x(r.total)+6).attr('y',i*rh+rh/2+4).text(fI(r.total)+' · '+fP0(r.total/all)+(t?' · ':''));
       if(t)tx.append('tspan').style('font-weight',700).style('fill',aT/t>=1?css('--ok'):aT/t>=.8?css('--warn'):css('--bad')).text(fP0(aT/t)+' of target');}
     svg.append('rect').attr('x',0).attr('y',i*rh).attr('width',W).attr('height',rh).attr('fill','transparent').style('cursor','pointer')
-      .on('pointermove',ev=>{tip.replaceChildren();const a=document.createElement('div');a.textContent=r.storer;const bb=document.createElement('span');
-        const l1=document.createElement('div');l1.textContent=`Occupied: ${fI(r.Occupied)} (${fP(r.Occupied/r.total)})`;
-        const l2=document.createElement('div');l2.textContent=`Zero: ${fI(r.Zero)} (${fP(r.Zero/r.total)})`;
-        bb.textContent=`Total ${fI(r.total)} · ${fP(r.total/all)} of all warehouses`;const tg=tgSum('target_productivity',r.storer,fm);const l3=document.createElement('div');l3.textContent=tg?`Target ${fI(tg)} · ${fP(sum(R.filter(q=>q.storer===r.storer&&hasTg(q)),'total_checked')/tg)} of target`:'No target';tip.append(a,l1,l2,l3,bb);tip.hidden=false;place(tip,el,ev);})
+      .on('pointermove',ev=>{const tg=tgSum('target_productivity',r.storer,fm),aT=sum(R.filter(q=>q.storer===r.storer&&hasTg(q)),'total_checked');
+        tipRows(tip,r.storer+(fm?' · '+fm+' '+D.year:''),[['Occupied',`${fI(r.Occupied)} (${fP(r.Occupied/r.total)})`],['Zero',`${fI(r.Zero)} (${fP(r.Zero/r.total)})`],
+          ['Total',`${fI(r.total)} · ${fP(r.total/all)} of all warehouses`],['Target',tg?fI(tg):'no target'],
+          tg?['% of target',fP(aT/tg),pc(aT/tg)]:['',null]]);place(tip,el,ev,110);})
       .on('pointerleave',()=>tip.hidden=true).on('click',()=>{fs=fs===r.storer?'':r.storer;render();});});
 }
 
@@ -290,9 +294,11 @@ function targetMonthChart(elId,met){
     .style('font-weight',700).style('fill',r=>{const p=r.aT/r.t;return p>=1?css('--ok'):p>=.8?css('--warn'):css('--bad');}).text(r=>fP0(r.aT/r.t));
   const tip=tipFor(el);
   svg.append('g').selectAll('rect').data(rows).join('rect').attr('x',r=>x(r.m)-x.step()*x.padding()/2).attr('width',x.step()).attr('height',H-mb).attr('fill','transparent').style('cursor','pointer')
-    .on('pointermove',(ev,r)=>{tip.replaceChildren();const a=document.createElement('div');a.textContent=r.m+' '+D.year+(fs?' · '+fs:'');
-      const b1=document.createElement('div');b1.textContent=(met==='rep'?'Reports: ':'Locations checked: ')+fI(r.a);
-      const b2=document.createElement('span');b2.textContent=r.t?`Target ${fI(r.t)} · ${fP(r.aT/r.t)} of target`:'No target';tip.append(a,b1,b2);tip.hidden=false;place(tip,el,ev,60);})
+    .on('pointermove',(ev,r)=>{const u=met==='rep'?'reports':'locations';
+      tipRows(tip,r.m+' '+D.year+(fs?' · '+fs:''),[[met==='rep'?'Reports':'Locations checked',fI(r.a)],
+        ['Target',r.t?fI(r.t):'no target'],
+        r.t?['% of target',fP(r.aT/r.t),pc(r.aT/r.t)]:['',null],
+        r.t&&r.aT!==r.a?['Counted toward target',fI(r.aT)+' (warehouses with a target)']:['',null]]);place(tip,el,ev,90);})
     .on('pointerleave',()=>tip.hidden=true).on('click',(ev,r)=>{fm=fm===r.m?'':r.m;render();});
 }
 let pmView='abs',pmMet='prod';
@@ -337,7 +343,9 @@ function prodHeat(){
     .attr('stroke',c=>isTot(c)?css('--fg'):(pmView==='tgt'&&c.p==null?css('--line'):'none')).attr('stroke-width',1.5).attr('stroke-opacity',c=>dim(c)?.2:.55);
   if(!narrow)g.append('text').text(label).attr('x',bw/2).attr('y',(rh-4)/2+4).attr('text-anchor','middle').style('font-weight',c=>isTot(c)||pmView==='tgt'?700:400).style('fill',tcol);
   g.on('pointermove',(ev,c)=>{const who=c.storer,when=c.month===TOT?'all months':c.month+' '+D.year,unit=pmMet==='rep'?'reports':'locations';
-      tip.textContent=`${who} · ${when}: ${fI(c.v)} ${unit}`+(c.kind==='mtot'||c.kind==='grand'?'':` · ${fP(c.share)} of ${c.month===TOT?'all':c.month}`)+(c.t?` · target ${fI(c.t)} (${fP(c.p)})`:' · no target');tip.hidden=false;place(tip,el,ev,36);})
+      tipRows(tip,`${who} · ${when}`,[[pmMet==='rep'?'Reports':'Locations checked',fI(c.v)],
+        c.kind==='mtot'||c.kind==='grand'?['',null]:['Share',`${fP(c.share)} of ${c.month===TOT?'all':c.month}`],
+        ['Target',c.t?fI(c.t):'no target'],c.t?['% of target',fP(c.p),pc(c.p)]:['',null]]);place(tip,el,ev,80);})
    .on('pointerleave',()=>tip.hidden=true).on('click',(ev,c)=>{fs=c.storer===ALL?'':c.storer;fm=c.month===TOT?'':c.month;render();});
 }
 document.querySelectorAll('[data-met]').forEach(bt=>bt.onclick=()=>{pmMet=bt.dataset.met;document.querySelectorAll('[data-met]').forEach(x=>x.classList.toggle('on',x===bt));prodHeat();});
@@ -378,7 +386,8 @@ function iraHeat(){
   if(!narrow)g.append('text').text(r=>fP0(r.coverage)).attr('x',bw/2).attr('y',(rh-4)/2+4).attr('text-anchor','middle')
     .style('font-weight',700).style('font-size','12px').style('fill',r=>dim(r)?css('--muted'):band(r.coverage).fg);
   g.on('pointermove',(ev,r)=>{const who=r.storer===ALL?'All warehouses':r.storer,when=r.month===TOT?'all months':r.month;
-      tip.textContent=`${who} · ${when}: ${fP(r.coverage)} (${fI(r.counted)} of ${fI(r.total)}) · target 100%, gap ${fI(r.total-r.counted)}`;tip.hidden=false;place(tip,el,ev,36);})
+      tipRows(tip,`${who} · ${when}`,[['IRA coverage',fP(r.coverage),pc(r.coverage)],['Locations counted',fI(r.counted)],
+        ['Target',`${fI(r.total)} locations (100%)`],['Gap',`${fI(r.total-r.counted)} locations not counted`]]);place(tip,el,ev,80);})
    .on('pointerleave',()=>tip.hidden=true)
    .on('click',(ev,r)=>{fs=r.storer===ALL?'':r.storer;fm=r.month===TOT?'':r.month;render();});
 }
